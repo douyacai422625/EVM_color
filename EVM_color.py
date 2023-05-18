@@ -28,6 +28,18 @@ class EVM:
         NTFSFrame = np.reshape(NTFSFrame,frame.shape)
 
         return NTFSFrame
+    def NTSC2BGR(self,mag_frame):
+        reshape_size = mag_frame.shape[0] * mag_frame.shape[1]
+        reshape_frame = np.reshape(mag_frame, (reshape_size, 3))
+        RGB_img = np.dot(reshape_frame, self.T.transpose())
+        RGB_img = np.maximum(RGB_img, 0)
+        pos = np.where(RGB_img > 1)
+        for r in pos[0]:
+            RGB_img[r, :] /= max(RGB_img[r, :])
+
+        matRGB = (np.reshape(RGB_img, mag_frame.shape) * 255.0).astype(np.uint8)
+        matBGR = cv2.cvtColor(matRGB, cv2.COLOR_RGB2BGR)
+        return matBGR
     def GaussBlurDn(self,img):
         for _ in range(self.levels + 1):
             expand_img = cv2.copyMakeBorder(img, 2, 2, 0, 0, cv2.BORDER_REFLECT_101)
@@ -47,8 +59,8 @@ class EVM:
         return img
 
     ################################  创造理想带通滤波器  ###########################################
-    def idealFilter(self,img_list,axis = 0):
-        tensor = np.array(img_list[:291])
+    def idealFilter(self,img_list):
+        tensor = np.array(img_list)
         fft_data = np.fft.fft(tensor,axis=0)
         frequencies = fftpack.fftfreq(tensor.shape[0], d=1.0 / self.fps)
         bound_low = (np.abs(frequencies - self.low)).argmin()
@@ -69,19 +81,7 @@ class EVM:
             mag_frame = cv2.resize(mag_frame,(init_frame.shape[1],init_frame.shape[0]),cv2.INTER_CUBIC)
             mag_frame += init_frame
 
-            reshape_size = mag_frame.shape[0] * mag_frame.shape[1]
-            reshape_frame = np.reshape(mag_frame, (reshape_size, 3))
-            RGB_img = np.dot(reshape_frame,self.T.transpose())
-            RGB_img = np.maximum(RGB_img,0)
-            pos = np.where(RGB_img > 1)
-            for r in pos[0]:
-                RGB_img[r,:] /= max(RGB_img[r,:])
+            matBGR = self.NTSC2BGR(mag_frame)
 
-            matRGB = (np.reshape(RGB_img,init_frame.shape) * 255.0).astype(np.uint8)
-            matBGR = cv2.cvtColor(matRGB,cv2.COLOR_RGB2BGR)
-            cv2.imshow("matBGR",matBGR)
-            cv2.waitKey(1)
-
-
-
+            Mag_fame.append(matBGR)
         return Mag_fame
