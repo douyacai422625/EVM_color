@@ -4,7 +4,7 @@ import numpy as np
 from scipy.fft import fft, ifft
 import scipy.fftpack as fftpack
 
-class EVM:
+class EVM_color:
     def __init__(self,low_freq,high_freq,fps,level,alpha):
         self.low = low_freq
         self.high = high_freq
